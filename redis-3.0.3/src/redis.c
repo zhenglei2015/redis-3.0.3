@@ -1574,7 +1574,7 @@ void initServerConfig(void) {
 
     /* category memory stats */
     server.categoryStatsDict = dictCreate(&categoryStatsDictType, NULL);
-
+    server.calculateCategoryChild = -1;
 }
 
 /* This function will try to raise the max number of open files accordingly to
