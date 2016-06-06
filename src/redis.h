@@ -694,6 +694,9 @@ struct redisServer {
     struct redisCommand *delCommand, *multiCommand, *lpushCommand, *lpopCommand,
                         *rpopCommand;
     /* Fields used only for stats */
+    dict* categoryStatsDict;
+    pid_t calculateCategoryChild;
+
     time_t stat_starttime;          /* Server start time */
     long long stat_numcommands;     /* Number of processed commands */
     long long stat_numconnections;  /* Number of connections received */
@@ -1003,6 +1006,7 @@ extern dictType shaScriptObjectDictType;
 extern double R_Zero, R_PosInf, R_NegInf, R_Nan;
 extern dictType hashDictType;
 extern dictType replScriptCacheDictType;
+extern dictType categoryStatsDictType;
 
 /*-----------------------------------------------------------------------------
  * Functions prototypes
@@ -1383,6 +1387,7 @@ void setnxCommand(redisClient *c);
 void setexCommand(redisClient *c);
 void psetexCommand(redisClient *c);
 void getCommand(redisClient *c);
+void getStatsCommand(redisClient *c);
 void delCommand(redisClient *c);
 void existsCommand(redisClient *c);
 void setbitCommand(redisClient *c);

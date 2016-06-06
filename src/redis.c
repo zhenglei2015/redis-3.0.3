@@ -52,7 +52,7 @@
 #include <sys/resource.h>
 #include <sys/utsname.h>
 #include <locale.h>
-
+#include "category.h"
 /* Our shared "common" objects */
 
 struct sharedObjectsStruct shared;
@@ -228,6 +228,8 @@ struct redisCommand redisCommandTable[] = {
     {"echo",echoCommand,2,"rF",0,NULL,0,0,0,0,0},
     {"save",saveCommand,1,"ars",0,NULL,0,0,0,0,0},
     {"bgsave",bgsaveCommand,1,"ar",0,NULL,0,0,0,0,0},
+    {"cc",ccCommand,1,"a",0,NULL,0,0,0,0,0},
+    {"kcc",killccCommand,1,"a",0,NULL,0,0,0,0,0},
     {"bgrewriteaof",bgrewriteaofCommand,1,"ar",0,NULL,0,0,0,0,0},
     {"shutdown",shutdownCommand,-1,"arlt",0,NULL,0,0,0,0,0},
     {"lastsave",lastsaveCommand,1,"rRF",0,NULL,0,0,0,0,0},
@@ -646,6 +648,16 @@ dictType replScriptCacheDictType = {
     dictSdsKeyCaseCompare,      /* key compare */
     dictSdsDestructor,          /* key destructor */
     NULL                        /* val destructor */
+};
+
+/* category StatsDictType */
+dictType categoryStatsDictType = {
+        dictSdsHash,                /* hash function */
+        NULL,                       /* key dup */
+        NULL,                       /* val dup */
+        dictSdsKeyCompare,          /* key compare */
+        dictSdsDestructor,          /* key destructor */
+        dictSdsDestructor           /* val destructor */
 };
 
 int htNeedsResize(dict *dict) {
@@ -1556,6 +1568,10 @@ void initServerConfig(void) {
     server.assert_line = 0;
     server.bug_report_start = 0;
     server.watchdog_period = 0;
+
+    /* category memory stats */
+    server.categoryStatsDict = dictCreate(&categoryStatsDictType, NULL);
+    server.calculateCategoryChild = -1;
 }
 
 /* This function will try to raise the max number of open files accordingly to
@@ -3476,7 +3492,11 @@ static void sigShutdownHandler(int sig) {
 
     switch (sig) {
     case SIGINT:
-        msg = "Received SIGINT scheduling shutdown...";
+        if(getpid() == server.calculateCategoryChild) {
+            ccRemoveTempFile(getpid());
+            exit(0);
+        }
+            msg = "Received SIGINT scheduling shutdown...";
         break;
     case SIGTERM:
         msg = "Received SIGTERM scheduling shutdown...";
