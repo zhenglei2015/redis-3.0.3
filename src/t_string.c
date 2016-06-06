@@ -173,10 +173,10 @@ void getStatCommand(redisClient *c) {
     dictEntry *di = dictFind(server.categoryStatsDict, c->argv[1]->ptr);
     if (!di) {
         char zero[2] = "0\0";
-        addReplyBulk(c, createObject(REDIS_STRING, (char *) zero));
+        addReplyStatus(c, zero);
     } else {
-        sds *size = dictGetVal(di);
-        addReplyBulk(c, createObject(REDIS_STRING, (char *) size));
+        sds size = dictGetVal(di);
+        addReplyStatus(c, size);
     }
 }
 
