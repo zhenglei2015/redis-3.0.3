@@ -1128,9 +1128,6 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     /* We received a SIGTERM, shutting down here in a safe way, as it is
      * not ok doing so inside the signal handler. */
     if (server.shutdown_asap) {
-        if(server.calculateCategoryChild != -1 && getpid() == server.calculateCategoryChild){
-            exit(0);
-        }
         if (prepareForShutdown(0) == REDIS_OK) exit(0);
         redisLog(REDIS_WARNING,"SIGTERM received but errors trying to shut down the server, check the logs for more information");
         server.shutdown_asap = 0;
@@ -3495,6 +3492,8 @@ static void sigShutdownHandler(int sig) {
 
     switch (sig) {
     case SIGINT:
+        if(getpid() == server.calculateCategoryChild)
+            exit(0);
         msg = "Received SIGINT scheduling shutdown...";
         break;
     case SIGTERM:
