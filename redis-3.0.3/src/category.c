@@ -247,7 +247,7 @@ void ccCommand(redisClient *c) {
     pid_t p;
     if(server.calculateCategoryChild != -1) {
         addReplyError(c, "ctegory calculating thread is running\n");
-    } else if((p = fork()) == 0) {
+    } else if((p = fork()) == 0) { /* child */
         doCalculateCategory();
         exit(0);
     } else {
