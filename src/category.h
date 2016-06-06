@@ -1,5 +1,7 @@
 #include "redis.h"
 #include "rio.h"
+#include <sys/types.h>
+#include <sys/wait.h>
 
 long long categoryObjectSize(robj *o);
 void doCalculateCategory();

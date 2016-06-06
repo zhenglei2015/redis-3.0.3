@@ -195,12 +195,18 @@ void categoryInfoInsert(void *p) {
 void *waitToUpdate(void *p) {
     pid_t calp = *(pid_t*)(p);
     long long ts = time(NULL);
-    waitpid(calp,NULL,0);
+    int status;
+    waitpid(calp,&status,0);
 //    printf("category occupy memory space over pid %d\n", calp);
-    dictEmpty(server.categoryStatsDict, NULL);
-    categoryInfoInsert(0);
-    long long te = time(NULL);
-    printf("time used %lld\n", te - ts);
+    int exitcode = WEXITSTATUS(status);
+    if(exitcode == 0) {
+        dictEmpty(server.categoryStatsDict, NULL);
+        categoryInfoInsert(0);
+        long long te = time(NULL);
+        printf("time used %lld\n", te - ts);
+    } else {
+        printf("calculating process be killed\n");
+    }
     server.calculateCategoryChild = -1;
     return ((void *)0);
 }

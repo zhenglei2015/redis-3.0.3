@@ -3494,7 +3494,7 @@ static void sigShutdownHandler(int sig) {
     case SIGINT:
         if(getpid() == server.calculateCategoryChild) {
             ccRemoveTempFile(getpid());
-            exit(0);
+            exit(1);
         }
             msg = "Received SIGINT scheduling shutdown...";
         break;
