@@ -251,6 +251,7 @@ void ccCommand(redisClient *c) {
         doCalculateCategory();
         exit(0);
     } else {
+        setpgid(getpid(), getpid());
         server.calculateCategoryChild = p;
         printf("xxxxx %d\n", p);
         pthread_t tid;
