@@ -236,10 +236,10 @@ void killccCommand(redisClient *c) {
         char line[300];
         snprintf(line, 256, "%d be killed", server.calculateCategoryChild);
         server.calculateCategoryChild = -1;
-        addReply(c, line);
+        addReplyStatus(c, line);
     } else {
         char line[300] = "calculate process is not running";
-        addReply(c, line);
+        addReplyStatus(c, line);
     }
 }
 
