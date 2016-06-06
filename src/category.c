@@ -230,11 +230,24 @@ void addCateforyStats(robj *key, long long valsize, dict* tempDict) {
     }
 }
 
+void killccCommand(redisClient *c) {
+    if(server.calculateCategoryChild != -1){
+        kill(server.calculateCategoryChild, SIGINT);
+        char line[300];
+        snprintf(line, 256, "%d be killed", server.calculateCategoryChild);
+        server.calculateCategoryChild = -1;
+        addReply(c, line);
+    } else {
+        char line[300] = "calculate process is not running";
+        addReply(c, line);
+    }
+}
+
 void ccCommand(redisClient *c) {
     pid_t p;
     if(server.calculateCategoryChild != -1) {
         addReplyError(c, "ctegory calculating thread is running\n");
-    } else if((p = fork()) == 0) {
+    } else if((p = fork()) == 0) { /* child */
         doCalculateCategory();
         exit(0);
     } else {

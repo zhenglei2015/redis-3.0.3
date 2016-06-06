@@ -229,6 +229,7 @@ struct redisCommand redisCommandTable[] = {
     {"save",saveCommand,1,"ars",0,NULL,0,0,0,0,0},
     {"bgsave",bgsaveCommand,1,"ar",0,NULL,0,0,0,0,0},
     {"cc",ccCommand,1,"a",0,NULL,0,0,0,0,0},
+    {"kcc",killccCommand,1,"a",0,NULL,0,0,0,0,0},
     {"bgrewriteaof",bgrewriteaofCommand,1,"ar",0,NULL,0,0,0,0,0},
     {"shutdown",shutdownCommand,-1,"arlt",0,NULL,0,0,0,0,0},
     {"lastsave",lastsaveCommand,1,"rRF",0,NULL,0,0,0,0,0},
@@ -1573,7 +1574,7 @@ void initServerConfig(void) {
 
     /* category memory stats */
     server.categoryStatsDict = dictCreate(&categoryStatsDictType, NULL);
-
+    server.calculateCategoryChild = -1;
 }
 
 /* This function will try to raise the max number of open files accordingly to
