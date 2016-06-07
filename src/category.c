@@ -1,6 +1,7 @@
 #include "category.h"
 
 static char *filename = "category.txt";
+static dict* tempDict = NULL;
 
 ssize_t sizeOfStringObject(robj *obj) {
     if (obj->encoding == REDIS_ENCODING_INT) {
@@ -176,19 +177,16 @@ void categoryInfoInsert(void *p) {
     rioInitWithFile(&r, file);
     char line[10000];
     int len = 10000;
-    dictEmpty(server.categoryStatsDict, NULL);
+    dictEmpty(tempDict, NULL);
     while(fgets(line,len,file)!=NULL) {
         int pos = strstr(line, "$$") - line;
         if(pos > 0) {
             sds key = sdsnewlen(line, pos);
             sds val = sdsnewlen(line + pos + 2, strlen(line) - pos - 3);
-            if(dictAdd(server.categoryStatsDict, key, val) != DICT_OK) {
-
-            } else {
-
-            }
+            dictAdd(tempDict, key, val);
         }
     }
+
     fclose(file);
 }
 
@@ -197,17 +195,25 @@ void *waitToUpdate(void *p) {
     long long ts = time(NULL);
     int status;
     waitpid(calp,&status,0);
+    if(tempDict == NULL)
+        tempDict = dictCreate(&categoryStatsDictType, NULL);
+
+
 //    printf("category occupy memory space over pid %d\n", calp);
     int exitcode = WEXITSTATUS(status);
     if(exitcode == 0) {
-        dictEmpty(server.categoryStatsDict, NULL);
+        dictEmpty(tempDict, NULL);
         categoryInfoInsert(0);
         long long te = time(NULL);
+        __sync_bool_compare_and_swap(&server.categoryStatsDict, server.categoryStatsDict, tempDict);
         printf("time used %lld\n", te - ts);
+        redisLog(LOG_INFO, "calculating process end success\n");
     } else {
         printf("calculating process be killed\n");
+        redisLog(LOG_INFO, "calculating process be killed\n");
     }
     server.calculateCategoryChild = -1;
+    redisLog(LOG_INFO, "category stats end at %ld ", time(NULL));
     return ((void *)0);
 }
 
@@ -244,6 +250,7 @@ void killccCommand(redisClient *c) {
         kill(server.calculateCategoryChild, SIGINT);
         char line[300];
         snprintf(line, 256, "%d be killed", server.calculateCategoryChild);
+        redisLog(LOG_INFO, "%d be killed", server.calculateCategoryChild);
         server.calculateCategoryChild = -1;
         addReplyStatus(c, line);
     } else {
@@ -257,10 +264,11 @@ void ccCommand(redisClient *c) {
     if(server.calculateCategoryChild != -1) {
         addReplyError(c, "ctegory calculating thread is running\n");
     } else if((p = fork()) == 0) { /* child */
+        setpgid(getpid(), getpid());
         doCalculateCategory();
         exit(0);
     } else {
-        setpgid(getpid(), getpid());
+        redisLog(LOG_INFO, "category stats start at %ld ", time(NULL));
         server.calculateCategoryChild = p;
         pthread_t tid;
         if (pthread_create(&tid,NULL,waitToUpdate,&p) == 0) {
