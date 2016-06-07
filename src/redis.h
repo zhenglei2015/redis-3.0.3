@@ -695,7 +695,7 @@ struct redisServer {
                         *rpopCommand;
     /* Fields used only for stats */
     dict* categoryStatsDict;
-    pid_t calculateCategoryChild;
+    volatile pid_t calculateCategoryChild;
 
     time_t stat_starttime;          /* Server start time */
     long long stat_numcommands;     /* Number of processed commands */
